@@ -1,0 +1,48 @@
+---
+
+- name: Firewall setup
+  hosts: all
+  vars:
+    firewall_rules:
+      - { name: 'Allow SSH', rule: 'port 22/tcp', state: 'present'}
+      - { name: 'Allow HTTP', rule: 'port 80/tcp', state: 'present'}
+      - { name: 'Allow HTTPS', rule: 'port 443/tcp', state: 'present'}
+
+  tasks:
+    - name: Install firewall for Ubuntu
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Enable firewall for Ubuntu
+      ansible.builtin.service:
+        name: ufw
+        state: started
+        enabled: true
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Install firewall for CentOS
+      ansible.builtin.yum:
+        name: firewalld
+        state: present
+      when: ansible_distribution == "CentOS"
+
+    - name: Enable firewall for CentOS
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: true
+      when: ansible_distribution == "CentOS"
+
+    - name: Configuring the firewall rules for CentOS 
+      firewalld:
+        zone: public
+        permanent: true
+        state: enabled
+      when: ansible_distribution == "CentOS"
+
+    - name: Allow SSH on Ubuntu
+      become: true
+      shell: ufw allow ssh
+      when: ansible_distribution == "Ubuntu"
